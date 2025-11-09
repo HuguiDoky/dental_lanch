@@ -21,9 +21,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner:
           false, // Quita la etiqueta de "debug" en la esquina.
       title: 'Dental Lanch', // Título de la app.
-      theme: ThemeData(
-        primarySwatch: Colors.pink, // Color primario del tema (rosa).
-      ),
+      theme: ThemeData(primarySwatch: Colors.pink),
       home:
           const WelcomeScreen(), // Pantalla principal que se mostrará al iniciar la app.
     );
@@ -39,7 +37,7 @@ class WelcomeScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.white, // Fondo blanco.
+      backgroundColor: Colors.white,
       body: SafeArea(
         // SafeArea evita que el contenido se superponga con la barra de estado o notch.
         // SingleChildScrollView para evitar overflow en pantallas pequeñas

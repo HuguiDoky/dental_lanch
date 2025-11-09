@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../constants.dart'; // Importamos las constantes
-
-// <<< CAMBIO: Importamos la nueva pantalla de Perfil
+import '../../constants.dart';
 import 'profile_screen.dart';
 
 // --- Constantes de la Barra de Navegación ---
@@ -26,10 +24,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // Controlador para las páginas (vistas)
   final PageController _pageController = PageController();
 
-  // <<< CAMBIO: Lista de las pantallas que se mostrarán >>>
+  // <<< Lista de las pantallas que se mostrarán >>>
   // Estas son las 4 "pestañas" de tu app
   final List<Widget> _widgetOptions = <Widget>[
-    const _HomeScreenContent(), // El dashboard (lo que ya teníamos)
+    const _HomeScreenContent(), // El dashboard
     const Center(
       child: Text(
         'Mis Citas',
@@ -42,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
         style: TextStyle(fontSize: 24, color: kLogoGrayColor),
       ),
     ),
-    const ProfileScreen(), // <<< CAMBIO: La nueva pantalla de perfil
+    const ProfileScreen(), // <<< La pantalla de perfil
   ];
 
   // --- Función para manejar el toque en la barra de navegación ---
@@ -50,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _currentPageIndex = index;
     });
-    // Hacemos que la página cambie con una animación suave
+    // la página cambie con una animación suave
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -74,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // Usamos PageView para poder deslizar entre pantallas (opcional)
+      // Usamos PageView para poder deslizar entre pantallas
       // y controlarlo con la barra de navegación
       body: PageView(
         controller: _pageController,
@@ -85,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         children: _widgetOptions,
       ),
-      // --- CAMBIO: Añadimos la barra de navegación inferior ---
+      // --- Añadimos la barra de navegación inferior ---
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -115,8 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: kLogoGrayColor, // Color gris para los demás
         onTap: _onItemTapped, // Llama a nuestra función al presionar
         type: BottomNavigationBarType.fixed, // Mantiene los 4 ítems visibles
-        showSelectedLabels:
-            false, // Oculta etiquetas (puedes ponerlas si quieres)
+        showSelectedLabels: false, // Oculta etiquetas
         showUnselectedLabels: false,
         elevation: 10.0,
         backgroundColor: Colors.white,
@@ -126,10 +123,9 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // -----------------------------------------------------------------
-// --- Contenido del Dashboard (Lo que antes era HomeScreen) ---
+// --- Contenido del Dashboard ---
 // -----------------------------------------------------------------
 // Separamos el contenido de la "Home" en su propio widget
-// para mantener el código limpio.
 class _HomeScreenContent extends StatefulWidget {
   const _HomeScreenContent();
 
@@ -179,7 +175,7 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
               icon: Icons.calendar_today_outlined,
               index: 0,
               onTap: () {
-                // Todo: Navegar a la pantalla de Agendar Cita
+                // Navegar a la pantalla de Agendar Cita
               },
             ),
             const SizedBox(height: 16),
@@ -188,7 +184,7 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
               icon: Icons.list_alt_outlined, // Icono cambiado
               index: 1,
               onTap: () {
-                // Todo: Navegar a la pantalla de Mis Citas
+                // Navegar a la pantalla de Mis Citas
               },
             ),
             const SizedBox(height: 16),
@@ -197,7 +193,7 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
               icon: Icons.person_outline,
               index: 2,
               onTap: () {
-                // <<< CAMBIO: Llama a la función del widget padre >>>
+                // <<< Llama a la función del widget padre >>>
                 // Esto cambiará la pestaña de la barra de navegación
                 homeScreenState?._navigateToProfile();
               },

@@ -118,7 +118,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        // <<< Ahora esto usa la WelcomeScreen real de main.dart >>>
                         builder: (context) => const WelcomeScreen(),
                       ),
                       (route) => false,

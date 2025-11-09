@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text(
                   'Inicia Sesión con tu cuenta',
                   style: TextStyle(
-                    color: kPrimaryColor, // <<< CAMBIO
+                    color: kPrimaryColor,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
@@ -72,10 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Subtítulo
                 const Text(
                   'Ingresa tu correo electrónico para iniciar sesión en Dental Lanch',
-                  style: TextStyle(
-                    color: kTextGrayColor, // <<< CAMBIO
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(color: kTextGrayColor, fontSize: 15),
                   textAlign: TextAlign.center,
                 ),
 
@@ -120,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity, // El botón ocupa todo el ancho
                   child: ElevatedButton(
                     onPressed: () {
-                      // Todo: Implementar lógica de inicio de sesión
+                      // Implementar lógica de inicio de sesión
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
@@ -157,10 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Text(
                       '¿Olvidaste tu contraseña? ',
-                      style: TextStyle(
-                        color: kTextGrayColor, // <<< CAMBIO
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: kTextGrayColor, fontSize: 14),
                     ),
                     TextButton(
                       onPressed: () {
