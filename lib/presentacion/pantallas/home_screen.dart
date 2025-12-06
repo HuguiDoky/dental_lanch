@@ -1,54 +1,105 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
+// Se importan las pantallas conectadas
 import 'profile_screen.dart';
+import 'ac_pasouno.dart';
+import 'citas.dart';
 
 // --- Constantes de la Barra de Navegación ---
 const int kHomePageIndex = 0;
 const int kCalendarPageIndex = 1;
 const int kNotificationsPageIndex = 2;
 const int kProfilePageIndex = 3;
-const double kBottomNavigationBarHeight = 80.0; // Altura estimada
+const double kBottomNavigationBarHeight = 80.0;
 
-// Convertimos HomeScreen en un StatefulWidget para manejar el estado de la navegación
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  // Parámetros para recibir datos de la confirmación
+  final int initialIndex;
+  final Map<String, String>? newAppointment;
+
+  const HomeScreen({super.key, this.initialIndex = 0, this.newAppointment});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Variable de estado para saber qué pestaña está seleccionada
-  int _currentPageIndex = kHomePageIndex;
-
-  // Controlador para las páginas (vistas)
+  late int _currentPageIndex;
   final PageController _pageController = PageController();
 
-  // <<< Lista de las pantallas que se mostrarán >>>
-  // Estas son las 4 "pestañas" de tu app
-  final List<Widget> _widgetOptions = <Widget>[
-    const _HomeScreenContent(), // El dashboard
-    const Center(
-      child: Text(
-        'Mis Citas',
-        style: TextStyle(fontSize: 24, color: kLogoGrayColor),
-      ),
-    ),
-    const Center(
-      child: Text(
-        'Notificaciones',
-        style: TextStyle(fontSize: 24, color: kLogoGrayColor),
-      ),
-    ),
-    const ProfileScreen(), // <<< La pantalla de perfil
-  ];
+  // Lista estática para guardar TODAS las citas en memoria
+  static final List<Map<String, String>> _appointmentsQueue = [];
 
-  // --- Función para manejar el toque en la barra de navegación ---
+  @override
+  void initState() {
+    super.initState();
+    _currentPageIndex = widget.initialIndex;
+
+    // Si se recibe una nueva cita, la agregamos a la lista
+    if (widget.newAppointment != null) {
+      _appointmentsQueue.add(widget.newAppointment!);
+
+      // Se ordena la lista para que la fecha más cercana quede primero
+      _appointmentsQueue.sort((a, b) {
+        DateTime dateA = _parseDate(a['date']!);
+        DateTime dateB = _parseDate(b['date']!);
+        return dateA.compareTo(dateB);
+      });
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(_currentPageIndex);
+      }
+    });
+  }
+
+  // Helper para convertir el String de fecha en DateTime y poder comparar
+  DateTime _parseDate(String dateStr) {
+    try {
+      String cleanDate = dateStr.split(', ')[1];
+      List<String> parts = cleanDate.split(' - ');
+
+      List<String> dateParts = parts[0].split(' ');
+      int day = int.parse(dateParts[0]);
+      String monthStr = dateParts[2];
+      int year = int.parse(dateParts[3]);
+
+      Map<String, int> months = {
+        'Ene': 1,
+        'Feb': 2,
+        'Mar': 3,
+        'Abr': 4,
+        'May': 5,
+        'Jun': 6,
+        'Jul': 7,
+        'Ago': 8,
+        'Sep': 9,
+        'Oct': 10,
+        'Nov': 11,
+        'Dic': 12,
+      };
+      int month = months[monthStr] ?? 1;
+
+      List<String> timeParts = parts[1].split(' ');
+      List<String> hm = timeParts[0].split(':');
+      int hour = int.parse(hm[0]);
+      int minute = int.parse(hm[1]);
+      String period = timeParts[1];
+
+      if (period == 'PM' && hour != 12) hour += 12;
+      if (period == 'AM' && hour == 12) hour = 0;
+
+      return DateTime(year, month, day, hour, minute);
+    } catch (e) {
+      return DateTime.now().add(const Duration(days: 3650));
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _currentPageIndex = index;
     });
-    // la página cambie con una animación suave
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -56,8 +107,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- Función para navegar a la página de perfil desde el dashboard ---
-  // Esta función se pasará al widget _HomeScreenContent
   void _navigateToProfile() {
     _onItemTapped(kProfilePageIndex);
   }
@@ -70,10 +119,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Obtenemos la cita más próxima (la primera de la lista ordenada)
+    final nextApp = _appointmentsQueue.isNotEmpty
+        ? _appointmentsQueue.first
+        : null;
+
+    final List<Widget> widgetOptions = <Widget>[
+      // Pestaña 0: Home (Dashboard)
+      _HomeScreenContent(appointment: nextApp),
+
+      // Pestaña 1: Mis Citas
+      AppointmentsScreen(appointments: _appointmentsQueue),
+
+      // Pestaña 2: Notificaciones
+      const Center(
+        child: Text(
+          'Notificaciones',
+          style: TextStyle(fontSize: 24, color: kLogoGrayColor),
+        ),
+      ),
+
+      // Pestaña 3: Perfil
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
-      // Usamos PageView para poder deslizar entre pantallas
-      // y controlarlo con la barra de navegación
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -81,14 +152,13 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentPageIndex = index;
           });
         },
-        children: _widgetOptions,
+        children: widgetOptions,
       ),
-      // --- Añadimos la barra de navegación inferior ---
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home), // Icono relleno
+            activeIcon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
@@ -108,12 +178,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: _currentPageIndex,
-        selectedItemColor:
-            kPrimaryColor, // Color rosa para el ítem seleccionado
-        unselectedItemColor: kLogoGrayColor, // Color gris para los demás
-        onTap: _onItemTapped, // Llama a nuestra función al presionar
-        type: BottomNavigationBarType.fixed, // Mantiene los 4 ítems visibles
-        showSelectedLabels: false, // Oculta etiquetas
+        selectedItemColor: kPrimaryColor,
+        unselectedItemColor: kLogoGrayColor,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        showSelectedLabels: false,
         showUnselectedLabels: false,
         elevation: 10.0,
         backgroundColor: Colors.white,
@@ -123,26 +192,27 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // -----------------------------------------------------------------
-// --- Contenido del Dashboard ---
+// --- Contenido del Dashboard (Widget Interno) ---
 // -----------------------------------------------------------------
-// Separamos el contenido de la "Home" en su propio widget
 class _HomeScreenContent extends StatefulWidget {
-  const _HomeScreenContent();
+  // Recibimos la cita opcional (la más próxima)
+  final Map<String, String>? appointment;
+
+  const _HomeScreenContent({this.appointment});
 
   @override
   State<_HomeScreenContent> createState() => __HomeScreenContentState();
 }
 
 class __HomeScreenContentState extends State<_HomeScreenContent> {
-  // Estado para la tarjeta de navegación seleccionada
   int? _selectedCardIndex;
-  // Estado para la campana de notificación
   bool _isNotificationActive = false;
 
   @override
   Widget build(BuildContext context) {
-    // Buscamos la función _navigateToProfile del widget padre (HomeScreen)
     final homeScreenState = context.findAncestorStateOfType<_HomeScreenState>();
+    // Usamos directamente la cita que nos pasa el padre
+    final nextAppointment = widget.appointment;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -150,15 +220,11 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Encabezado ---
             _buildHeader(),
             const SizedBox(height: 30),
-
-            // --- Tarjeta de Próxima Cita ---
-            _buildNextAppointmentCard(),
+            // Se pasa la cita al widget de la tarjeta
+            _buildNextAppointmentCard(nextAppointment),
             const SizedBox(height: 40),
-
-            // --- ¿Qué necesitas hoy? ---
             const Text(
               '¿Qué necesitas hoy?',
               style: TextStyle(
@@ -168,23 +234,26 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // --- Botones de Navegación ---
             _buildNavigationCard(
               title: 'Agendar cita',
               icon: Icons.calendar_today_outlined,
               index: 0,
               onTap: () {
-                // Navegar a la pantalla de Agendar Cita
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ScheduleAppointmentScreen(),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 16),
             _buildNavigationCard(
               title: 'Mis citas',
-              icon: Icons.list_alt_outlined, // Icono cambiado
+              icon: Icons.list_alt_outlined,
               index: 1,
               onTap: () {
-                // Navegar a la pantalla de Mis Citas
+                homeScreenState?._onItemTapped(kCalendarPageIndex);
               },
             ),
             const SizedBox(height: 16),
@@ -193,8 +262,6 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
               icon: Icons.person_outline,
               index: 2,
               onTap: () {
-                // <<< Llama a la función del widget padre >>>
-                // Esto cambiará la pestaña de la barra de navegación
                 homeScreenState?._navigateToProfile();
               },
             ),
@@ -203,8 +270,6 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
       ),
     );
   }
-
-  // --- Widgets Auxiliares (sin cambios) ---
 
   Widget _buildHeader() {
     return Row(
@@ -243,8 +308,8 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
     );
   }
 
-  Widget _buildNextAppointmentCard() {
-    // Color dinámico de la campana
+  // Se modifica para recibir la cita como parámetro
+  Widget _buildNextAppointmentCard(Map<String, String>? appointment) {
     final Color bellColor = _isNotificationActive
         ? kPrimaryColor
         : kLogoGrayColor;
@@ -281,7 +346,6 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              // Campana interactiva
               IconButton(
                 icon: Icon(
                   _isNotificationActive
@@ -297,40 +361,63 @@ class __HomeScreenContentState extends State<_HomeScreenContent> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Limpieza Dental',
-            style: TextStyle(
-              color: kLogoGrayColor,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+
+          // Lógica: Si no hay cita, mostrar estado vacío
+          if (appointment == null) ...[
+            const SizedBox(height: 20),
+            const Center(
+              child: Column(
+                children: [
+                  Icon(Icons.event_note, color: kBorderGrayColor, size: 40),
+                  SizedBox(height: 8),
+                  Text(
+                    'No tienes citas programadas',
+                    style: TextStyle(color: kTextGrayColor, fontSize: 15),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Text(
-            'Odont. Fernanda Lampart',
-            style: TextStyle(color: kTextGrayColor, fontSize: 15),
-          ),
-          const SizedBox(height: 16),
-          const Divider(color: kBorderGrayColor),
-          const SizedBox(height: 16),
-          const Row(
-            children: [
-              Icon(
-                Icons.calendar_today_outlined,
+            const SizedBox(height: 20),
+          ] else ...[
+            // Si hay cita, mostrar los datos
+            const SizedBox(height: 8),
+            Text(
+              appointment['treatment']!,
+              style: const TextStyle(
                 color: kLogoGrayColor,
-                size: 20,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
-              SizedBox(width: 12),
-              Text(
-                'Martes, 21 de Oct. - 10:30 AM',
-                style: TextStyle(
+            ),
+            Text(
+              appointment['doctor']!,
+              style: const TextStyle(color: kTextGrayColor, fontSize: 15),
+            ),
+            const SizedBox(height: 16),
+            const Divider(color: kBorderGrayColor),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(
+                  Icons.calendar_today_outlined,
                   color: kLogoGrayColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
+                  size: 20,
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    appointment['date']!,
+                    style: const TextStyle(
+                      color: kLogoGrayColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
